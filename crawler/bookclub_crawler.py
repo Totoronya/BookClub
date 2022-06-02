@@ -43,7 +43,7 @@ class SectionContent:
 
 class Crawler:
 
-    def __init__(self, site: str, path_to_save: str):
+    def __init__(self, site: Website, path_to_save: str):
         self.site = site
         self.visited = []
         self.path_to_save = path_to_save

@@ -1,14 +1,31 @@
 import re
 
-import bs4.element
 import requests
 from bs4 import BeautifulSoup
 
 
 class Website:
-    """Contains information about website structure"""
+    """
+    Basic class. Contains information about website structure
 
-    def __init__(self, name: str, url: str, target_pattern: str, absolute_url: bool, tag_class: str):
+    """
+
+    def __init__(self, name: str, url: str, target_pattern: str, absolute_url: bool, tag_class: str) -> None:
+        """
+        Parameters
+        __________
+
+        name : str
+            The name of a website
+        url : str
+            The link of the website
+        target_pattern : str
+            A pattern which is used for navigation between the website sections
+        absolute_url : bool
+            Contains information whether it is absolute url or not
+        tag_class:
+            An information about next page button
+        """
         self.name = name
         self.url = url
         self.target_pattern = target_pattern
@@ -16,58 +33,54 @@ class Website:
         self.tag_class = tag_class
 
 
-class SectionContent:
-    """
-    Common base class for all content in sections
-    """
-
-    def __init__(self, url: str, book_name: str, book_author: str, book_descr: str, book_price, book_link: str):
-        self.url = url
-        self.book_name = book_name
-        self.book_author = book_author
-        self.book_descr = book_descr
-        self.book_price = book_price
-        self.book_link = book_link
-
-    def print(self):
-        """
-        Flexible printing function controls output
-        """
-        print("++++++++++++++++++++++++++")
-        print('URL: {}'.format(self.url))
-        print('NAME: {}'.format(self.book_name))
-        print('AUTHOR: {}'.format(self.book_author))
-        print('PRICE: {}'.format(self.book_price))
-        print("+++++++++++++++++++++++++++++\n")
-
-
 class Crawler:
+    """
+    Basic class. Gets data from a website
+    ...
 
-    def __init__(self, site: Website, path_to_save: str):
+    Attributes:
+        visited : list
+            contains visited links
+        data : list
+            contains collected data
+
+    """
+
+    def __init__(self, site: Website) -> None:
+        """
+        Parameters
+        __________
+
+        site : Website
+            the website with data
+        """
         self.site = site
         self.visited = []
-        self.path_to_save = path_to_save
         self.data = []
 
-    def get_page(self, url) -> BeautifulSoup | None:
+    @classmethod
+    def get_page(cls, url: str) -> BeautifulSoup | None:
+        """
+        Returns a webpage or None
+
+        Parameters
+        ----------
+
+        url : str
+            The link you want to get
+
+        Raises
+        ------
+            RequestException
+            If the page is inaccessible
+        """
         try:
             req = requests.get(url)
         except requests.exceptions.RequestException:
             return None
         return BeautifulSoup(req.text, 'lxml')
 
-    def safe_get(self, page_obj: bs4.BeautifulSoup, selector: str):
-        """
-        Utility function used to get a content string from a Beautiful Soup
-        object and a selector. Returns an empty string if no object
-        is found for the given selector
-        """
-        selected_elms = page_obj.select(selector)
-        if selected_elms is not None and len(selected_elms) > 0:
-            return '\n'.join([elem.get_text() for elem in selected_elms])
-        return ''
-
-    def parse(self, url):
+    def parse(self, url: str) -> None:
         """
         Extract content from a given page URL
         """
@@ -85,18 +98,22 @@ class Crawler:
                     if len(book_price) == 6:
                         book_price = book_price[0: -3]
 
-                    book_descr = book.select_one('div.mainGoodContent').text[:-22]
+                    # book_descr = book.select_one('div.mainGoodContent').text[:-22]
 
-                    # book_content = SectionContent(url=url, book_name=book_name, book_author=book_author,
-                    #                               book_descr=book_descr,
-                    #                               book_price=book_price, book_link=book_link)
+                    if len(self.data) == 0:
+                        self.data.append([book_name, book_author, book_price,
+                                          book_link])
+                    elif len(self.data) > 0:
+                        for obj in self.data:
+                            if obj[3] != book_link:
+                                self.data.append([book_name, book_author, book_price,
+                                                  book_link])
+                                return
 
-                    self.data.append([book_name, book_author, book_price,
-                                      book_link])
                 except AttributeError:
                     print('Missing some attributes. Can not save data')
 
-    def crawl(self):
+    def crawl(self) -> None:
         """
         Get pages from website home page
         """

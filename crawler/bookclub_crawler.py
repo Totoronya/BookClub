@@ -8,24 +8,15 @@ class Website:
     """
     Basic class. Contains information about website structure
 
+    Args:
+        name (str): Website name
+        url (str): Website link
+        target_pattern (str): Pattern for navigation between sections
+        absolute_url (bool): Absolute link or not
+        tag_class (str): Information about next page button
     """
 
     def __init__(self, name: str, url: str, target_pattern: str, absolute_url: bool, tag_class: str) -> None:
-        """
-        Parameters
-        __________
-
-        name : str
-            The name of a website
-        url : str
-            The link of the website
-        target_pattern : str
-            A pattern which is used for navigation between the website sections
-        absolute_url : bool
-            Contains information whether it is absolute url or not
-        tag_class:
-            An information about next page button
-        """
         self.name = name
         self.url = url
         self.target_pattern = target_pattern
@@ -39,20 +30,14 @@ class Crawler:
     ...
 
     Attributes:
-        visited : list
-            contains visited links
-        data : list
-            contains collected data
-
+        visited (list): visited links
+        data (list): collected data
     """
 
     def __init__(self, site: Website) -> None:
         """
-        Parameters
-        __________
-
-        site : Website
-            the website with data
+        :param site: the website with data to collect
+        :type site: Website
         """
         self.site = site
         self.visited = []
@@ -61,18 +46,12 @@ class Crawler:
     @classmethod
     def get_page(cls, url: str) -> BeautifulSoup | None:
         """
-        Returns a webpage or None
+        Check the page and returns it like a BeautifulSoup object or None
 
-        Parameters
-        ----------
-
-        url : str
-            The link you want to get
-
-        Raises
-        ------
-            RequestException
-            If the page is inaccessible
+        :param url: link
+        :type url: str
+        :return: BeautifulSoup object
+        :exception RequestException
         """
         try:
             req = requests.get(url)
@@ -82,7 +61,11 @@ class Crawler:
 
     def parse(self, url: str) -> None:
         """
-        Extract content from a given page URL
+        Extracts all book data from a given page URL
+
+        :param url: link
+        :type url: str
+        :exception AttributeError: if the BeautifulSoup object has no such attribute
         """
         bs = self.get_page(url)
         if bs is not None:
@@ -99,23 +82,27 @@ class Crawler:
                         book_price = book_price[0: -3]
 
                     # book_descr = book.select_one('div.mainGoodContent').text[:-22]
+                    # contains short book description
 
                     if len(self.data) == 0:
                         self.data.append([book_name, book_author, book_price,
                                           book_link])
-                    elif len(self.data) > 0:
-                        for obj in self.data:
-                            if obj[3] != book_link:
+                    if len(self.data) > 0:
+                        for data_list in self.data:
+                            # print(data_list)
+                            if book_link not in data_list:
                                 self.data.append([book_name, book_author, book_price,
                                                   book_link])
-                                return
+                                break
+                            break
 
                 except AttributeError:
                     print('Missing some attributes. Can not save data')
 
     def crawl(self) -> None:
         """
-        Get pages from website home page
+        Get all pages from website home page
+        :return: None
         """
         bs = self.get_page(self.site.url)
         section_pages = bs.findAll('a', class_='sec-menu-link', href=re.compile(self.site.target_pattern))

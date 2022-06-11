@@ -84,17 +84,8 @@ class Crawler:
                     # book_descr = book.select_one('div.mainGoodContent').text[:-22]
                     # contains short book description
 
-                    if len(self.data) == 0:
-                        self.data.append([book_name, book_author, book_price,
-                                          book_link])
-                    if len(self.data) > 0:
-                        for data_list in self.data:
-                            # print(data_list)
-                            if book_link not in data_list:
-                                self.data.append([book_name, book_author, book_price,
-                                                  book_link])
-                                break
-                            break
+                    self.data.append([book_name, book_author, book_price,
+                                      book_link])
 
                 except AttributeError:
                     print('Missing some attributes. Can not save data')
